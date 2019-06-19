@@ -1,0 +1,342 @@
+openapi: 3.0.0
+info:
+  title: Мост кинотека-еаис
+  description: |
+    API для доступа к данным ЕАИС из Кинотеки
+  contact:
+    email: ah@fond-kino.ru
+  version: 1.0.0-oas3
+servers:
+- url: http://mkesb.sapi.fond-kino.ru:8083/sapi/rest
+tags:
+- name: kinoteka
+  description: Кинотека
+- name: eais
+  description: ЕАИС
+paths:
+  /login:
+    post:
+      tags:
+      - login
+      summary: Выполняет процедуру аутентификации и возвращает объект пользователя
+      requestBody:
+        description: Объект запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResult'
+        401:
+          description: Ошибка аутентификации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+        500:
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+  /api/kinoteka/comp-stat:
+    post:
+      tags:
+      - company,statistics
+      summary: Возвращает статистику по компании
+      requestBody:
+        description: Объект запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompsStatRequest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompStat'
+        401:
+          description: Ошибка аутентификации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+        500:
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+  /api/kinoteka/film-stat:
+    post:
+      tags:
+      - film,statistics
+      summary: Возвращает статистику по фильмам
+      requestBody:
+        description: Объект запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilmsStatRequest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FilmStat'
+        401:
+          description: Ошибка аутентификации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+        500:
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      properties:
+        login:
+          type: string
+          description: Аутентификационные данные в формате login/password
+    ErrorResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: false - ошибка
+        exception:
+          $ref: '#/components/schemas/Error'
+    Error:
+      type: object
+      properties:
+        errCode:
+          type: integer
+          format: int32
+        message:
+          type: string
+          description: Сообщение сервера
+    LoginResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: true - все ок
+        user:
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        anonymous:
+          type: boolean
+          description: Если true, то пользователь - аноним
+        email:
+          type: string
+          description: email пользователя
+        fio:
+          type: string
+          description: ФИО пользователя
+        grants:
+          type: string
+          description: Список идентификаторов грантов через зпт
+        login:
+          type: string
+          description: Имя пользователя
+        orgDesc:
+          type: string
+          description: Описание организации пользователя
+        orgId:
+          type: string
+          description: ID организации пользователя
+        orgName:
+          type: string
+          description: Название организации пользователя
+        phone:
+          type: string
+          description: Контактный телефон
+        roles:
+          type: string
+          description: Список идентификаторов ролей через зпт
+        stoken:
+          type: string
+          description: Токен сессии, передается в заголовок всех запросов S-Token.
+            Перманентный. Жив пока не сделаешь logoff
+    CompsStatRequest:
+      required:
+      - comps
+      type: object
+      properties:
+        periodFrom:
+          type: string
+          description: Начало запрашиваемого периода
+          format: YYYY-MM-DD
+        periodTo:
+          type: string
+          description: Конец запрашиваемого периода
+          format: YYYY-MM-DD
+        comps:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompStatRequest'
+    CompStatRequest:
+      required:
+      - compId
+      - compName
+      - pus
+      type: object
+      properties:
+        compId:
+          type: integer
+          description: ID компании
+        compName:
+          type: string
+          description: Название компании
+        pus:
+          type: string
+          description: Список ПУ (разделитель ",")
+    CompStat:
+      type: object
+      properties:
+        ktcompId:
+          type: integer
+          description: ID компании
+          format: int64
+        fkTcktsReturn00:
+          type: integer
+          description: зрители по безвозвратным проектам
+          format: int64
+        fkTcktsReturn01:
+          type: integer
+          description: зрители по возвратным проектам
+          format: int64
+        fkTcktsReturn11:
+          type: integer
+          description: зрители по 100% возвратным проектам
+          format: int64
+        fkTcktsTotal:
+          type: integer
+          description: зрители по проектам ФК
+          format: int64
+        fkSessReturn00:
+          type: integer
+          description: сеансы по безвозвратным проектам
+          format: int64
+        fkSessReturn01:
+          type: integer
+          description: сеансы по возвратным проектам
+          format: int64
+        fkSessReturn11:
+          type: integer
+          description: сеансы по 100% возвратным проектам
+          format: int64
+        fkSessTotal:
+          type: integer
+          description: сеансы по проектам ФК
+          format: int64
+        fkSummReturn00:
+          type: number
+          description: сборы по безвозвратным проектам
+          format: money
+        fkSummReturn01:
+          type: number
+          description: сборы по возвратным проектам
+          format: money
+        fkSummReturn11:
+          type: number
+          description: сборы по 100% возвратным проектам
+          format: money
+        fkSummTotal:
+          type: number
+          description: сборы по проектам ФК
+          format: money
+        fkFilmsReturn00:
+          type: integer
+          description: фильмов по безвозвратным проектам
+          format: int64
+        fkFilmsReturn01:
+          type: integer
+          description: фильмов по возвратным проектам
+          format: int64
+        fkFilmsReturn11:
+          type: integer
+          description: фильмов по 100% возвратным проектам
+          format: int64
+        fkFilmsTota:
+          type: integer
+          description: фильмов по проектам ФК
+          format: int64
+        tcktsTotal:
+          type: integer
+          description: зрителей по компании
+          format: int64
+        sessTotal:
+          type: integer
+          description: сеансов по компании
+          format: int64
+        summTotal:
+          type: number
+          description: сборы по компании
+          format: money
+        filmsTotal:
+          type: integer
+          description: фильмов по компании
+          format: int64
+      description: Статистика по компании (все данные возвращаются за выбранный период)
+    FilmsStatRequest:
+      required:
+      - pus
+      type: object
+      properties:
+        periodFrom:
+          type: string
+          description: Начало запрашиваемого периода
+          format: YYYY-MM-DD
+        periodTo:
+          type: string
+          description: Конец запрашиваемого периода
+          format: YYYY-MM-DD
+        pus:
+          type: string
+          description: Список ПУ (разделитель ",")
+    FilmStat:
+      type: object
+      properties:
+        puNum:
+          type: string
+          description: Номер ПУ
+        filmName:
+          type: string
+          description: Название фильма
+        tcktsTotal:
+          type: integer
+          description: зрителей по фильму за выбранный период
+          format: int64
+        sessTotal:
+          type: integer
+          description: сеансов по фильму за выбранный период
+          format: int64
+        summTotal:
+          type: number
+          description: сборы по фильму за выбранный период
+          format: money
+      description: Статистика по фильму
